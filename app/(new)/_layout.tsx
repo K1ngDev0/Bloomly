@@ -5,7 +5,7 @@ import { StatusBar } from "react-native";
 import 'react-native-gesture-handler';
 import 'react-native-reanimated';
 
-export default function RootLayout() {
+export default function _layout() {
 
   useEffect(() => {
     NavigationBar.setVisibilityAsync('hidden');
