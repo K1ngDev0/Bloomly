@@ -1,9 +1,9 @@
-import { Spacer } from "@/components/Spacers";
-import StyledButton from "@/components/StyledButton";
-import StyledText from "@/components/StyledText";
 import { router } from "expo-router";
 import { Image, Keyboard, StyleSheet, TouchableWithoutFeedback, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Spacer } from "../components/Spacers";
+import StyledButton from "../components/StyledButton";
+import StyledText from "../components/StyledText";
 import { Colors } from "../constants/Colors";
 
 const image = require('../assets/images/BloomlyBackgroundV1.png');

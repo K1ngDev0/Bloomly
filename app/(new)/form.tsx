@@ -1,7 +1,7 @@
 import { Image, Keyboard, StyleSheet, TouchableWithoutFeedback } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const image = require('../assets/images/blankBackground.png');
+const image = require('../../assets/images/blankBackground.png');
 
 export default function Index() {
   return (
