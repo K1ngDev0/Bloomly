@@ -24,7 +24,7 @@ export default function Index() {
 
         <View style={styles.content}>
           <View style={styles.overlay}>
-            <Image source={require('../assets/images/BloomlySprout.png')} />
+            <Image source={require('../assets/images/BloomlySprout.png')} style={{ width: 100, height: 100 }} />
             <StyledText style={styles.title} title={true}>Bloomly</StyledText>
             <StyledText style={styles.text}>Welcome, little sprout!</StyledText>
           </View>
@@ -70,7 +70,6 @@ const styles = StyleSheet.create({
     paddingVertical: 100,
     zIndex: 1,
   },
-
   centerImage: {
     position: 'absolute',
     alignSelf: 'center',
@@ -84,12 +83,12 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   text: {
-    fontSize: 24,
+    fontSize: 18,
     textAlign: "center",
     fontWeight: "400",
   },
   title: {
-    fontSize: 56,
+    fontSize: 48,
     fontWeight: "bold",
     textAlign: "center",
   },

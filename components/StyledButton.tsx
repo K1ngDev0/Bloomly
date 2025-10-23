@@ -28,7 +28,7 @@ export default function StyledButton({ title, children, style, textStyle, onPres
 const styles = StyleSheet.create({
   button: {
     backgroundColor: Colors.primary,
-    borderRadius: 999, // full rounded
+    borderRadius: 999,
     paddingVertical: 12,
     paddingHorizontal: 20,
     alignItems: 'center',
@@ -47,6 +47,6 @@ const styles = StyleSheet.create({
   text: {
     color: '#fff',
     fontWeight: '600',
-    fontSize: 22,
+    fontSize: 18,
   },
 });
