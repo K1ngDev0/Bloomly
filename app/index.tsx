@@ -38,7 +38,7 @@ export default function Index() {
             </StyledButton>
             <Spacer size={8} />
             <StyledButton
-              onPress={() => router.push('/form')}
+              onPress={() => router.replace('/form')}
               textStyle={{ color: Colors.button }}
             >
               New Garden

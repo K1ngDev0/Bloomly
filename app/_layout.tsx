@@ -15,7 +15,8 @@ export default function RootLayout() {
     <>
       <StatusBar hidden={true} translucent backgroundColor="transparent" />
       <Stack>
-        <Stack.Screen name="index" options={{ headerShown: false }} />
+        <Stack.Screen name="index" options={{ headerShown: false, animation: 'none' }} />
+        <Stack.Screen name="(new)" options={{ headerShown: false, animation: 'none' }} />
       </Stack>
     </>
   );
