@@ -1,7 +1,7 @@
 import * as NavigationBar from 'expo-navigation-bar';
 import { Stack } from "expo-router";
 import { useEffect } from "react";
-import { StatusBar } from "react-native";
+import { StatusBar, View } from "react-native";
 import 'react-native-gesture-handler';
 import 'react-native-reanimated';
 
@@ -12,12 +12,19 @@ export default function RootLayout() {
   }, []);
 
   return (
-    <>
+    <View style={{ flex: 1, backgroundColor: 'black' }}>
       <StatusBar hidden={true} translucent backgroundColor="transparent" />
-      <Stack>
-        <Stack.Screen name="index" options={{ headerShown: false, animation: 'none' }} />
-        <Stack.Screen name="(new)" options={{ headerShown: false, animation: 'none' }} />
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          animation: 'none',
+          // Ensure there's no white flash between screen mounts
+          contentStyle: { backgroundColor: 'black' },
+        }}
+      >
+        <Stack.Screen name="index" />
+        <Stack.Screen name="(new)" />
       </Stack>
-    </>
+    </View>
   );
 }

@@ -1,14 +1,17 @@
-import { Image, Keyboard, StyleSheet, TouchableWithoutFeedback } from "react-native";
+import { Keyboard, StyleSheet, TouchableWithoutFeedback, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const image = require('../assets/images/blankBaackground.png');
 
-export default function Index() {
+export default function Result() {
+
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <SafeAreaView style={styles.container} edges={['left', 'right', 'bottom']}>
-        <Image source={image} style={styles.backgroundImage} resizeMode="cover" />
 
+        <View
+          pointerEvents="none"
+          style={{ backgroundColor: 'black', position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 10 }}
+        />
         
       </SafeAreaView>
     </TouchableWithoutFeedback>
@@ -34,6 +37,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 100,
     zIndex: 1,
+    backgroundColor: 'black',
   },
   centerImage: {
     position: 'absolute',

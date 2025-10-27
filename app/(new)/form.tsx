@@ -1,10 +1,9 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useEffect, useState } from "react";
-import { Image, Keyboard, StyleSheet, TouchableWithoutFeedback, View } from "react-native";
+import { router } from "expo-router";
+import { useEffect, useRef, useState } from "react";
+import { Animated, Image, Keyboard, StyleSheet, TouchableWithoutFeedback } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import QuestionTemplate, { Question } from "../../components/QuestionTemplate";
-import StyledButton from "../../components/StyledButton";
-import StyledText from "../../components/StyledText";
 
 const questions: Question[] = [
   {
@@ -32,7 +31,6 @@ const questions: Question[] = [
     } as any,
   },
 
-  // --- Added: Physical Lifestyle (vitality / movement mapped to existing stats) ---
   {
     id: 'q3',
     prompt: 'How often do you go for a walk or exercise?',
@@ -252,6 +250,8 @@ export default function Index() {
   const [answers, setAnswers] = useState<string[]>([]);
   const [index, setIndex] = useState(0);
   const [stats, setStats] = useState<Stats | null>(null);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const fadeAnim = useRef(new Animated.Value(0)).current; // 0 -> visible, 1 -> fully black
 
   useEffect(() => {
     const load = async () => {
@@ -259,8 +259,15 @@ export default function Index() {
         const raw = await AsyncStorage.getItem(STORAGE_KEY);
         if (raw) {
           const stored: string[] = JSON.parse(raw);
-          setAnswers(stored);
-          setIndex(Math.min(stored.length, questions.length));
+          // If a previous session completed all answers, start fresh instead of jumping to results
+          if (stored.length >= questions.length) {
+            await AsyncStorage.removeItem(STORAGE_KEY);
+            setAnswers([]);
+            setIndex(0);
+          } else {
+            setAnswers(stored);
+            setIndex(Math.min(stored.length, questions.length));
+          }
         }
         const rawStats = await AsyncStorage.getItem(STORAGE_STATS);
         if (rawStats) setStats(JSON.parse(rawStats));
@@ -315,8 +322,21 @@ export default function Index() {
       setIndex(prev => (prev < questions.length - 1 ? prev + 1 : prev));
     }
   };
-
   const currentQuestion = questions[index];
+
+  useEffect(() => {
+    // Fade to black and then navigate to results only after this session completes and stats exist
+    if (index >= questions.length && stats && !isTransitioning) {
+      setIsTransitioning(true);
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 1200,
+        useNativeDriver: true,
+      }).start(() => {
+        router.replace('/result');
+      });
+    }
+  }, [index, stats, isTransitioning, fadeAnim]);
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
@@ -326,41 +346,13 @@ export default function Index() {
         {index < questions.length ? (
           <QuestionTemplate question={currentQuestion} onAnswer={handleAnswer} />
         ) : (
-          <View style={{ padding: 16 }}>
-            <StyledText title={true}>Summary</StyledText>
-
-            {stats ? (
-              <>
-                <StyledText>Confidence & counts are shown per trait.</StyledText>
-                <StyledText>🌞 Energy: {stats.energy} (confidence {stats.confidences?.energy ?? 0}%)</StyledText>
-                <StyledText>🎨 Creativity: {stats.creativity} (confidence {stats.confidences?.creativity ?? 0}%)</StyledText>
-                <StyledText>🪴 Calmness: {stats.calmness} (confidence {stats.confidences?.calmness ?? 0}%)</StyledText>
-                <StyledText>❤️ Kindness: {stats.kindness} (confidence {stats.confidences?.kindness ?? 0}%)</StyledText>
-                <StyledText>🌱 Discipline: {stats.discipline} (confidence {stats.confidences?.discipline ?? 0}%)</StyledText>
-              </>
-            ) : (
-              <View>
-                <StyledText>No stats calculated yet.</StyledText>
-              </View>
-            )}
-
-            <StyledButton
-              onPress={async () => {
-              setAnswers([]);
-              setStats(null);
-              setIndex(0);
-              await AsyncStorage.removeItem(STORAGE_KEY);
-              await AsyncStorage.removeItem(STORAGE_STATS);
-            }}
-            >
-              Reset Questions
-            </StyledButton>
-
-            {answers.map((a, i) => (
-              <StyledText key={i}>{`${i + 1}. ${a}`}</StyledText>
-            ))}
-          </View>
+          null
         )}
+
+        <Animated.View
+          pointerEvents="none"
+          style={[StyleSheet.absoluteFillObject, { backgroundColor: 'black', opacity: fadeAnim, zIndex: 10 }]}
+        />
         
       </SafeAreaView>
     </TouchableWithoutFeedback>
