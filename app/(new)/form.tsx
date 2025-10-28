@@ -1,9 +1,11 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Asset } from "expo-asset";
 import { router } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import { Animated, Image, Keyboard, StyleSheet, TouchableWithoutFeedback } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import QuestionTemplate, { Question } from "../../components/QuestionTemplate";
+import { Colors } from "../../constants/Colors";
 
 const questions: Question[] = [
   {
@@ -251,7 +253,29 @@ export default function Index() {
   const [index, setIndex] = useState(0);
   const [stats, setStats] = useState<Stats | null>(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [assetsLoaded, setAssetsLoaded] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current; // 0 -> visible, 1 -> fully black
+
+  useEffect(() => {
+    // preload local images used by this screen; if index already preloaded it's fast/no-op
+    let mounted = true;
+    const preload = async () => {
+      try {
+        const assetList = [
+          image,
+          ...questions.map(q => (q.image as any)),
+        ].filter(Boolean) as any[];
+        const unique = Array.from(new Set(assetList));
+        await Promise.all(unique.map(a => Asset.loadAsync(a)));
+      } catch (e) {
+        console.warn("Form: failed to preload assets", e);
+      } finally {
+        if (mounted) setAssetsLoaded(true);
+      }
+    };
+    preload();
+    return () => { mounted = false; };
+  }, []);
 
   useEffect(() => {
     const load = async () => {
@@ -341,11 +365,15 @@ export default function Index() {
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <SafeAreaView style={styles.container} edges={['left', 'right', 'bottom']}>
+        {/* keep background image but don't render main content until assetsLoaded to avoid any white/blank frame */}
         <Image source={image} style={styles.backgroundImage} resizeMode="cover" />
 
-        {index < questions.length ? (
-          <QuestionTemplate question={currentQuestion} onAnswer={handleAnswer} />
+        {assetsLoaded ? (
+          index < questions.length ? (
+            <QuestionTemplate question={currentQuestion} onAnswer={handleAnswer} />
+          ) : null
         ) : (
+          // while loading show nothing but the dark background (no white flash)
           null
         )}
 
@@ -364,6 +392,7 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: "center",
         padding: 0,
+        backgroundColor: Colors.primary, // restored to previous theme color
     },
     backgroundImage: {
         position: 'absolute',

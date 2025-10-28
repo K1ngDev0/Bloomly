@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { StatusBar } from 'react-native';
 import 'react-native-gesture-handler';
 import 'react-native-reanimated';
+import { Colors } from '../../constants/Colors';
 
 export default function _layout() {
   useEffect(() => {
@@ -14,7 +15,7 @@ export default function _layout() {
     <>
       <StatusBar hidden={true} translucent backgroundColor="transparent" />
       <Stack
-        screenOptions={{ headerShown: false, animation: 'none' }}
+        screenOptions={{ headerShown: false, animation: 'none', contentStyle: { backgroundColor: Colors.background }, }}
       >
       </Stack>
     </>

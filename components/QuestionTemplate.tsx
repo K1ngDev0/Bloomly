@@ -175,11 +175,13 @@ const styles = StyleSheet.create({
   container: {
     alignSelf: 'stretch',
     flex: 1, // fill vertical space so header/body/footer layout is stable
+    backgroundColor: 'transparent',
   },
   content: {
     padding: 16,
     flex: 1,
     justifyContent: 'space-between', // keep footer at bottom
+    backgroundColor: 'transparent',
   },
   header: {
     // increased and fixed minimum space for image + prompt so options/footer don't jump
@@ -204,6 +206,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 140, // same height as image to preserve layout when image is missing
     borderRadius: 8,
+    backgroundColor: 'transparent',
   },
   input: {
     borderWidth: 1,

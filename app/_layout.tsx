@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { StatusBar, View } from "react-native";
 import 'react-native-gesture-handler';
 import 'react-native-reanimated';
+import { Colors } from '../constants/Colors';
 
 export default function RootLayout() {
 
@@ -12,14 +13,14 @@ export default function RootLayout() {
   }, []);
 
   return (
-    <View style={{ flex: 1, backgroundColor: 'black' }}>
+    // revert to Colors.background so only result page is black
+    <View style={{ flex: 1, backgroundColor: Colors.background }}>
       <StatusBar hidden={true} translucent backgroundColor="transparent" />
       <Stack
         screenOptions={{
           headerShown: false,
           animation: 'none',
-          // Ensure there's no white flash between screen mounts
-          contentStyle: { backgroundColor: 'black' },
+          contentStyle: { backgroundColor: Colors.background },
         }}
       >
         <Stack.Screen name="index" />

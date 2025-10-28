@@ -1,3 +1,4 @@
+import { Asset } from "expo-asset";
 import { router } from "expo-router";
 import { Image, Keyboard, StyleSheet, TouchableWithoutFeedback, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -7,6 +8,27 @@ import StyledText from "../components/StyledText";
 import { Colors } from "../constants/Colors";
 
 const image = require('../assets/images/BloomlyBackgroundV1.png');
+
+const preloadFormAssets = async () => {
+	// list all images used by the form screen so they are cached before navigation
+	const assets = [
+		require('../assets/images/blankBackground.png'),
+		require('../assets/images/sunflower.png'),
+		require('../assets/images/lavender.png'),
+		require('../assets/images/china.png'),
+		require('../assets/images/flower.png'),
+		require('../assets/images/orchid.png'),
+		require('../assets/images/vine.png'),
+		require('../assets/images/english-ivy.png'),
+		require('../assets/images/red-rose.png'),
+	];
+	try {
+		await Promise.all(assets.map(a => Asset.loadAsync(a)));
+	} catch (e) {
+		// fail silently — still navigate if preload fails
+		console.warn('Failed to preload form assets', e);
+	}
+};
 
 export default function Index() {
   return (
@@ -38,7 +60,10 @@ export default function Index() {
             </StyledButton>
             <Spacer size={8} />
             <StyledButton
-              onPress={() => router.replace('/form')}
+              onPress={async () => {
+                await preloadFormAssets();
+                router.replace('/form');
+              }}
               textStyle={{ color: Colors.button }}
             >
               New Garden
