@@ -2,6 +2,9 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useEffect, useRef, useState } from "react";
 import { Animated, Keyboard, StyleSheet, TouchableWithoutFeedback, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import StyledButton from "../../components/StyledButton";
+import StyledText from "../../components/StyledText";
+import { Colors } from "../../constants/Colors";
 
 const STORAGE_STATS = "@bloomly_stats";
 
@@ -106,6 +109,10 @@ export default function Result() {
     });
   }, [firstFade, secondScale, secondOpacity, pulse]);
 
+  const handlePress = () => {
+    console.log("Button pressed");
+  };
+
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <SafeAreaView style={styles.container} edges={['left', 'right', 'bottom']}>
@@ -113,6 +120,9 @@ export default function Result() {
         <View pointerEvents="none" style={styles.dim} />
 
         <View style={styles.content}>
+
+          <StyledText style={styles.title} title={true}>Your Bloomy Flower is...</StyledText>
+
           {/* container for the main "thing" so layering is stable */}
           <View style={styles.centerContainer}>
             {/* main (custom) flower - fades in */}
@@ -137,7 +147,6 @@ export default function Result() {
               ]}
             />
 
-            {/* overlay sprout/pop that appears centered inside the main flower */}
             <Animated.View
               style={[
                 styles.overlayCenter,
@@ -155,14 +164,21 @@ export default function Result() {
             </Animated.View>
           </View>
 
-          {/* explanation: fades in with the reveal */}
           {explanation ? (
-            <Animated.Text style={[styles.explanation, { opacity: secondOpacity }]}>
-              {explanation}
-            </Animated.Text>
-          ) : null}
+            <Animated.View style={{ opacity: secondOpacity, marginTop: 16 }}>
+              <StyledText style={styles.explanationTitle} title={true}>
+                {explanation.split(' — ')[0] ?? explanation}
+              </StyledText>
+              <StyledText style={styles.explanationBody}>
+                {explanation.split(' — ')[1] ?? ''}
+              </StyledText>
 
-          {/* show why this specific main flower is special */}
+              <StyledButton onPress={handlePress} style={{ marginTop: 32, backgroundColor: Colors.button }}>
+                Start with your garden
+              </StyledButton>
+
+            </Animated.View>
+          ) : null}
 
         </View>
         
@@ -177,6 +193,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     padding: 0,
     backgroundColor: 'black', // ensure literal black background
+  },
+  title: {
+    color: '#fff',
   },
   dim: {
     position: 'absolute',
@@ -198,6 +217,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
+    marginTop: 64,
   },
 
   thingImage: {
@@ -230,12 +250,6 @@ const styles = StyleSheet.create({
     height: 120,
   },
 
-  title: {
-    color: '#fff',
-    fontSize: 18,
-    marginTop: 18,
-  },
-
   explanation: {
     color: '#fff',
     textAlign: 'center',
@@ -243,6 +257,22 @@ const styles = StyleSheet.create({
     maxWidth: 320,
     zIndex: 5,
     fontSize: 14,
-    opacity: 0, // initial state (animated via secondOpacity)
+  },
+  explanationTitle: {
+    color: '#fff',
+    textAlign: 'center',
+    marginTop: 12,
+    maxWidth: 320,
+    zIndex: 5,
+    fontSize: 32,
+    fontWeight: 'bold',
+  },
+  explanationBody: {
+    color: '#fff',
+    textAlign: 'center',
+    marginTop: 6,
+    maxWidth: "80%",
+    zIndex: 5,
+    fontSize: 24,
   },
 });

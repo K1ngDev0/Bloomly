@@ -52,7 +52,10 @@ export default function Index() {
           </View>
           <View style={styles.buttonContainer}>
             <StyledButton
-              onPress={() => console.log('Continue pressed!')}
+              onPress={async () => {
+                await preloadFormAssets();
+                router.replace('/loadingData');
+              }}
               style={{ backgroundColor: Colors.button ?? '#fff' }}
               textStyle={{ color: Colors.primary }}
             >

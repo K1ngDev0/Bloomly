@@ -117,6 +117,8 @@ export type Stats = {
   // added metadata for trust & transparency
   confidences?: { [trait: string]: number };
   counts?: { [trait: string]: number };
+  // dominant trait/flower saved for convenience (optional)
+  dominant?: string;
 };
 
 const DEFAULT_STATS: Stats = {
@@ -145,91 +147,88 @@ export function computeStats(answers: string[], questionsArr?: Question[]): Stat
     q8: { discipline: 0.6, creativity: 0.4 },
   };
 
-  const baseline: Record<string, number> = { ...DEFAULT_STATS } as any;
-  const traitAcc: Record<string, { sum: number; weight: number; values: number[] }> = {};
-  traitNames.forEach(t => (traitAcc[t] = { sum: 0, weight: 0, values: [] }));
-
+  // accumulate
   const explicitContributions: Record<string, number> = { energy: 0, creativity: 0, calmness: 0, kindness: 0, discipline: 0 };
   const explicitCounts: Record<string, number> = { energy: 0, creativity: 0, calmness: 0, kindness: 0, discipline: 0 };
+  const weightedSums: Record<string, number> = { energy: 0, creativity: 0, calmness: 0, kindness: 0, discipline: 0 };
+  const totalWeights: Record<string, number> = { energy: 0, creativity: 0, calmness: 0, kindness: 0, discipline: 0 };
+  const valuesByTrait: Record<string, number[]> = { energy: [], creativity: [], calmness: [], kindness: [], discipline: [] };
 
   if (questionsArr && questionsArr.length) {
     for (let i = 0; i < answers.length; i++) {
       const ans = answers[i];
       const q = questionsArr[i];
-      if (!q || !ans) continue;
-      const weightMap = QUESTION_TRAIT_WEIGHTS[q.id] ?? {};
+      if (!q || ans == null) continue;
 
       const effect = (q as any).effects?.[ans];
       if (effect) {
         (Object.keys(effect) as (keyof Stats)[]).forEach(k => {
           const delta = effect[k] ?? 0;
-
-          baseline[k] = (baseline[k] ?? 0) + delta;
           explicitContributions[k] = (explicitContributions[k] ?? 0) + delta;
           explicitCounts[k] = (explicitCounts[k] ?? 0) + 1;
         });
         continue;
       }
 
-      let numericVal = 1;
-      if (Array.isArray(q.options)) {
-        const idx = q.options.findIndex(o => o === ans);
-        const maxIdx = Math.max(0, q.options.length - 1);
-        numericVal = maxIdx - Math.max(0, idx);
+      // map answer to a normalized score in [-1, 1]
+      let normalized = 0;
+      if (Array.isArray(q.options) && q.options.length > 1) {
+        const idx = Math.max(0, q.options.findIndex(o => o === ans));
+        const maxIdx = q.options.length - 1;
+        if (maxIdx > 0) {
+          // earlier options are considered "higher" in this form; map to [-1..1]
+          normalized = ((maxIdx - idx) / maxIdx) * 2 - 1; // -1..1
+        }
       } else {
-        const parsed = parseFloat(ans);
-        if (!Number.isNaN(parsed)) numericVal = parsed;
+        const parsed = parseFloat(String(ans));
+        if (!Number.isNaN(parsed)) normalized = Math.max(-1, Math.min(1, parsed));
       }
 
-      const scaleMax = Array.isArray(q.options) && q.options.length > 1 ? Math.max(1, q.options.length - 1) : 3;
+      const weightMap = QUESTION_TRAIT_WEIGHTS[q.id] ?? {};
       Object.entries(weightMap).forEach(([trait, w]) => {
-        if (!traitAcc[trait]) traitAcc[trait] = { sum: 0, weight: 0, values: [] };
-        traitAcc[trait].sum += (numericVal / scaleMax) * (w ?? 0);
-        traitAcc[trait].weight += (w ?? 0);
-        traitAcc[trait].values.push(numericVal / scaleMax);
+        const weight = (w ?? 0);
+        weightedSums[trait] = (weightedSums[trait] ?? 0) + normalized * weight;
+        totalWeights[trait] = (totalWeights[trait] ?? 0) + Math.abs(weight);
+        valuesByTrait[trait].push(normalized);
       });
     }
-  } else {
   }
 
   const results: any = {};
   const confidences: Record<string, number> = {};
   const counts: Record<string, number> = {};
 
-  traitNames.forEach(trait => {
-    let val = baseline[trait] ?? 50;
+  // configuration: how much normalized answers can shift the baseline (in points)
+  const DELTA_SCALE = 30; // +/-30 from baseline (50)
+  const EXPECTED_COUNT = 2; // expected number of contributing questions per trait
 
-    // if we have accumulated weighted answers for this trait, map them to a delta around the baseline
-    const acc = traitAcc[trait];
-    if (acc.weight > 0 && acc.values.length > 0) {
-      const weightedAvg = acc.sum / Math.max(1e-6, acc.weight); // in 0..1 range
-      const scaleMid = 0.5;
-      // deltaNormalized roughly in (-0.5..0.5)
-      const deltaNormalized = weightedAvg - scaleMid;
-      // scale to an interpretable delta (tunable)
-      const delta = deltaNormalized * 40; // about +/-20 points max
-      val = (val ?? 50) + delta;
+  traitNames.forEach(trait => {
+    // compute delta from weighted normalized answers
+    let delta = 0;
+    if ((totalWeights[trait] || 0) > 0) {
+      const avgNorm = weightedSums[trait] / (totalWeights[trait] || 1); // approx in -1..1
+      delta = avgNorm * DELTA_SCALE;
     }
 
-    // clamp
-    results[trait] = clamp(val);
+    // explicit contributions are treated as direct deltas
+    const explicit = explicitContributions[trait] || 0;
 
-    // build confidence: coverage (how many Qs contributed) and consistency (low variance => higher)
-    const values = acc.values.length ? acc.values : [];
-    const count = values.length + (explicitCounts[trait] || 0);
+    const raw = 50 + delta + explicit;
+    results[trait] = clamp(raw);
+
+    const valueList = valuesByTrait[trait] || [];
+    const count = (valueList.length) + (explicitCounts[trait] || 0);
     counts[trait] = count;
 
-    const expectedCount = 2; // expected #questions per trait (tweakable)
-    const coverage = Math.min(1, count / expectedCount);
-
-    let consistency = 0.5; // fallback
-    if (values.length >= 1) {
-      const mean = values.reduce((a, b) => a + b, 0) / values.length;
-      const variance = values.reduce((a, b) => a + (b - mean) * (b - mean), 0) / values.length;
-      const maxVar = Math.pow(0.5, 2); // since normalized values are 0..1, variance can't exceed 0.25; use half-range squared as conservative
-      consistency = 1 - Math.min(1, variance / (maxVar || 1e-6));
-    } else if (explicitCounts[trait] > 0) {
-      // explicit mappings count as stronger evidence; treat as high consistency
+    // confidence: coverage + consistency
+    const coverage = Math.min(1, count / EXPECTED_COUNT);
+    let consistency = 0.5;
+    if (valueList.length > 0) {
+      const mean = valueList.reduce((a, b) => a + b, 0) / valueList.length;
+      const variance = valueList.reduce((a, b) => a + (b - mean) * (b - mean), 0) / valueList.length;
+      // normalized values in [-1,1] have max variance 1
+      consistency = 1 - Math.min(1, variance / 1);
+    } else if ((explicitCounts[trait] || 0) > 0) {
       consistency = 0.9;
     }
 
@@ -293,8 +292,7 @@ export default function Index() {
             setIndex(Math.min(stored.length, questions.length));
           }
         }
-        const rawStats = await AsyncStorage.getItem(STORAGE_STATS);
-        if (rawStats) setStats(JSON.parse(rawStats));
+        // NOTE: per new requirement we DO NOT load saved stats here; we only save them when the quiz completes.
       } catch (e) {
         console.error("Failed to load saved answers", e);
       }
@@ -336,6 +334,19 @@ export default function Index() {
         }
 
         setStats(finalToSave);
+        // compute & attach dominant trait (flower) for convenience when rendering results
+        try {
+          const traitKeys = ['energy', 'creativity', 'calmness', 'kindness', 'discipline'];
+          const dominant = traitKeys.reduce((best: string, key: string) => {
+            const bestVal = (finalToSave as any)[best] ?? -Infinity;
+            const curVal = (finalToSave as any)[key] ?? -Infinity;
+            return curVal > bestVal ? key : best;
+          }, traitKeys[0]);
+          (finalToSave as any).dominant = dominant;
+        } catch (err) {
+          // ignore
+        }
+
         await AsyncStorage.setItem(STORAGE_STATS, JSON.stringify(finalToSave));
         console.log("Finished. Saved answers and stats:", newAnswers, finalToSave);
         setIndex(questions.length);
