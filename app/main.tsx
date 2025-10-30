@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Keyboard, Pressable, StyleSheet, Text, TouchableWithoutFeedback, View } from 'react-native';
+import { ActivityIndicator, Image, Keyboard, Pressable, StyleSheet, Text, TouchableWithoutFeedback, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import storage from './lib/storage';
 
@@ -48,6 +48,7 @@ export default function Main() {
             <View style={styles.preview}>
               <Text style={styles.title}>Saved Garden</Text>
               <Text style={styles.text}>Dominant: {stats.dominant ?? '—'}</Text>
+              <Image source={stats.image ? { uri: stats.image } : require('../assets/images/china.png')} style={{ width: 100, height: 100, marginTop: 12 }} />
               <Text style={styles.text}>Energy: {stats.energy}</Text>
               <Text style={styles.text}>Creativity: {stats.creativity}</Text>
               <Text style={styles.text}>Calmness: {stats.calmness}</Text>
@@ -71,7 +72,6 @@ export default function Main() {
             <Pressable
               style={[styles.button, styles.secondary]}
               onPress={async () => {
-                // start fresh: clear saved stats and go to form
                 await storage.clearStats();
                 router.replace('/form');
               }}

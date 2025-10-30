@@ -1,4 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { router } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import { Animated, Keyboard, StyleSheet, TouchableWithoutFeedback, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -109,10 +110,6 @@ export default function Result() {
     });
   }, [firstFade, secondScale, secondOpacity, pulse]);
 
-  const handlePress = () => {
-    console.log("Button pressed");
-  };
-
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <SafeAreaView style={styles.container} edges={['left', 'right', 'bottom']}>
@@ -173,7 +170,7 @@ export default function Result() {
                 {explanation.split(' — ')[1] ?? ''}
               </StyledText>
 
-              <StyledButton onPress={handlePress} style={{ marginTop: 32, backgroundColor: Colors.button }}>
+              <StyledButton onPress={() => {router.replace('/loadingData')}} style={{ marginTop: 32, backgroundColor: Colors.button }}>
                 Start with your garden
               </StyledButton>
 

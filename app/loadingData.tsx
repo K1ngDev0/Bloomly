@@ -1,7 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, SafeAreaView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Image, SafeAreaView, StyleSheet, Text, View } from 'react-native';
+import { FLOWER_ASSETS } from '../components/QuestionTemplate';
 
 const STORAGE_STATS = "@bloomly_stats";
 
@@ -16,6 +17,24 @@ export default function MainLoader() {
         const raw = await AsyncStorage.getItem(STORAGE_STATS);
         if (!mounted) return;
         if (raw) {
+          // try to convert stored flower key -> resolved local asset URI so main can show it
+          try {
+            const parsed = JSON.parse(raw);
+            if (parsed && parsed.image && typeof parsed.image === 'string') {
+              const key = parsed.image;
+              const asset = (FLOWER_ASSETS as any)[key];
+              if (asset) {
+                // resolve the require(...) to a URI and persist the resolved URI
+                const resolved = Image.resolveAssetSource(asset)?.uri;
+                if (resolved) {
+                  parsed.image = resolved;
+                  await AsyncStorage.setItem(STORAGE_STATS, JSON.stringify(parsed));
+                }
+              }
+            }
+          } catch (e) {
+            // ignore parse/resolve errors and proceed to route
+          }
           router.replace('/main');
         } else {
           router.replace('/form');

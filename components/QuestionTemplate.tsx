@@ -171,6 +171,17 @@ const QuestionTemplate: React.FC<QuestionTemplateProps> = ({ question, onAnswer 
 
 export default QuestionTemplate;
 
+export const FLOWER_ASSETS: Record<string, any> = {
+  sunflower: require("../assets/images/sunflower.png"),
+  orchid: require("../assets/images/orchid.png"),
+  lavender: require("../assets/images/lavender.png"),
+  "english-ivy": require("../assets/images/english-ivy.png"),
+  "red-rose": require("../assets/images/red-rose.png"),
+  china: require("../assets/images/china.png"),
+  flower: require("../assets/images/flower.png"),
+  vine: require("../assets/images/vine.png"),
+};
+
 const styles = StyleSheet.create({
   container: {
     alignSelf: 'stretch',

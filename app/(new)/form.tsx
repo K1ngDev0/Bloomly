@@ -119,6 +119,7 @@ export type Stats = {
   counts?: { [trait: string]: number };
   // dominant trait/flower saved for convenience (optional)
   dominant?: string;
+  image?: string;
 };
 
 const DEFAULT_STATS: Stats = {
@@ -343,6 +344,17 @@ export default function Index() {
             return curVal > bestVal ? key : best;
           }, traitKeys[0]);
           (finalToSave as any).dominant = dominant;
+
+          // --- NEW: map dominant trait to a flower key and store that key in stats.image ---
+          // main/loader will resolve this key to a local asset URI when the app starts.
+          const FLOWER_BY_TRAIT: Record<string, string> = {
+            energy: 'sunflower',
+            creativity: 'orchid',
+            calmness: 'lavender',
+            kindness: 'english-ivy',
+            discipline: 'red-rose',
+          };
+          (finalToSave as any).image = FLOWER_BY_TRAIT[dominant] ?? dominant;
         } catch (err) {
           // ignore
         }
